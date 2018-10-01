@@ -1,0 +1,479 @@
+Send Python-Dev mailing list submissions to
+        python-dev@python.org
+
+To subscribe or unsubscribe via the World Wide Web, visit
+        https://mail.python.org/mailman/listinfo/python-dev
+or, via email, send a message with subject or body 'help' to
+        python-dev-request@python.org
+
+You can reach the person managing the list at
+        python-dev-owner@python.org
+
+When replying, please edit your Subject line so it is more specific
+than "Re: Contents of Python-Dev digest..."
+
+
+Today's Topics:
+
+   1. Re: switch statement (Steven D'Aprano)
+   2. Re: What is the purpose of the _PyThreadState_Current symbol
+      in Python 3? (Gabriele)
+   3. Re: bpo-34837: Multiprocessing.Pool API Extension - Pass Data
+      to Workers w/o Globals (Michael Selik)
+   4. Re: Change in Python 3's "round" behavior (Alex Walters)
+   5. Re: Change in Python 3's "round" behavior (Greg Ewing)
+   6. Re: Change in Python 3's "round" behavior (Alex Walters)
+   7. Re: Change in Python 3's "round" behavior (Steven D'Aprano)
+   8. Re: Change in Python 3's "round" behavior (Chris Angelico)
+
+
+----------------------------------------------------------------------
+
+Message: 1
+Date: Sun, 30 Sep 2018 02:04:20 +1000
+From: Steven D'Aprano <steve@pearwood.info>
+To: python-dev@python.org
+Subject: Re: [Python-Dev] switch statement
+Message-ID: <20180929160420.GE19437@ando.pearwood.info>
+Content-Type: text/plain; charset=us-ascii
+
+On Fri, Sep 21, 2018 at 02:10:00PM -0700, Guido van Rossum wrote:
+> There's already a rejected PEP about a switch statement:
+> https://www.python.org/dev/peps/pep-3103/. There's no point bringing this
+> up again unless you have a new use case.
+>
+> There have been several promising posts to python-ideas about the much more
+> powerful idea of a "match" statement. Please search for those before
+> re-posting on python-ideas.
+
+The Coconut transpiler also includes some interesting ideas for a match
+and case statement:
+
+http://coconut-lang.org/
+
+https://coconut.readthedocs.io/en/master/DOCS.html#match
+https://coconut.readthedocs.io/en/master/DOCS.html#case
+
+
+--
+Steve
+
+
+------------------------------
+
+Message: 2
+Date: Sat, 29 Sep 2018 17:14:22 +0100
+From: Gabriele <phoenix1987@gmail.com>
+To: njs@pobox.com
+Cc: python-dev@python.org
+Subject: Re: [Python-Dev] What is the purpose of the
+        _PyThreadState_Current symbol in Python 3?
+Message-ID:
+        <CAGnuNNsjo65daHJ+nzuxwpyZqEVWdtvYXJhGuX01E_HODLf=mA@mail.gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+
+Ah ok, this might be related to Victor's observation based on the
+latest sources. I haven't tested 3.7 yet, but if _PyRuntime is
+available from dynsym then this is already enough.
+
+Thanks,
+Gabriele
+On Sat, 29 Sep 2018 at 11:00, Nathaniel Smith <njs@pobox.com> wrote:
+>
+> On Fri, Sep 28, 2018 at 3:29 PM, Gabriele <phoenix1987@gmail.com> wrote:
+> > On Fri, 28 Sep 2018 at 23:12, Nathaniel Smith <njs@pobox.com> wrote:
+> >> What information do you wish the interpreter provided, that would make your program simpler and more reliable?
+> >
+> > An exported global variable that points to the head of the
+> > PyInterpreterState linked list (i.e. the return value of
+> > PyInterpreterState_Head). This way my program could just look this up
+> > from the dynsym section instead of scanning a dump of the bss section
+> > in memory to find a possible candidate.
+>
+> Hmm, it looks like in 3.7+, _PyRuntime is marked PyAPI_DATA, which I
+> think should make it exported from dynsym?
+>
+> https://github.com/python/cpython/blob/4b430e5f6954ef4b248e95bfb4087635dcdefc6d/Include/internal/pystate.h#L206
+>
+> And PyInterpreterState_Head is just _PyRuntime.interpreters.head. So
+> maybe this is already done...
+>
+> -n
+>
+> --
+> Nathaniel J. Smith -- https://vorpus.org
+
+
+
+--
+"Egli ? scritto in lingua matematica, e i caratteri son triangoli,
+cerchi, ed altre figure
+geometriche, senza i quali mezzi ? impossibile a intenderne umanamente parola;
+senza questi ? un aggirarsi vanamente per un oscuro laberinto."
+
+-- G. Galilei, Il saggiatore.
+
+
+------------------------------
+
+Message: 3
+Date: Sat, 29 Sep 2018 12:00:09 -0700
+From: Michael Selik <mike@selik.org>
+To: Sean Harrington <seanharr11@gmail.com>
+Cc: python-dev@python.org
+Subject: Re: [Python-Dev] bpo-34837: Multiprocessing.Pool API
+        Extension - Pass Data to Workers w/o Globals
+Message-ID:
+        <CAGgTfkPYmfjHfHOvTF=-=wyjBHhou3=EsxHmCa6NB+pHHhiiZQ@mail.gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+
+On Sat, Sep 29, 2018 at 5:24 AM Sean Harrington <seanharr11@gmail.com> wrote:
+>> On Fri, Sep 28, 2018 at 4:39 PM Sean Harrington <seanharr11@gmail.com> wrote:
+>> > My simple argument is that the developer should not be constrained to make the objects passed globally available in the process, as this MAY break encapsulation for large projects.
+>>
+>> I could imagine someone switching from Pool to ThreadPool and getting
+>> into trouble, but in my mind using threads is caveat emptor. Are you
+>> worried about breaking encapsulation in a different scenario?
+>
+> >> Without a specific example on-hand, you could imagine a tree of function calls that occur in the worker process (even newly created objects), that should not necessarily have access to objects passed from parent -> worker. In every case given the current implementation, they will.
+
+Echoing Antoine: If you want some functions to not have access to a
+module's globals, you can put those functions in a different module.
+Note that multiprocessing already encapsulates each subprocesses'
+globals in essentially a separate namespace.
+
+Without a specific example, this discussion is going to go around in
+circles. You have a clear aversion to globals. Antoine and I do not.
+No one else seems to have found this conversation interesting enough
+to participate, yet.
+
+
+------------------------------
+
+Message: 4
+Date: Sat, 29 Sep 2018 21:40:03 -0400
+From: "Alex Walters" <tritium-list@sdamon.com>
+To: <python-dev@python.org>
+Subject: Re: [Python-Dev] Change in Python 3's "round" behavior
+Message-ID: <234e01d4585e$829acc20$87d06460$@sdamon.com>
+Content-Type: text/plain;       charset="us-ascii"
+
+
+
+> -----Original Message-----
+> From: Python-Dev <python-dev-bounces+tritium-
+> list=sdamon.com@python.org> On Behalf Of Steven D'Aprano
+> Sent: Thursday, September 27, 2018 9:54 AM
+> To: python-dev@python.org
+> Subject: Re: [Python-Dev] Change in Python 3's "round" behavior
+>
+> On Thu, Sep 27, 2018 at 05:55:07PM +1200, Greg Ewing wrote:
+> > jab@math.brown.edu wrote:
+> > >I understand from
+> > >https://github.com/cosmologicon/pywat/pull/40#discussion_r219962259
+> > >that "to always round up... can theoretically skew the data"
+> >
+> > *Very* theoretically. If the number is even a whisker bigger than
+> > 2.5 it's going to get rounded up regardless:
+> >
+> > >>> round(2.500000000000001)
+> > 3
+> >
+> > That difference is on the order of the error you expect from
+> > representing decimal fractions in binary, so I would be surprised
+> > if anyone can actually measure this bias in a real application.
+>
+> I think you may have misunderstood the nature of the bias. It's not
+> about individual roundings and it definitely has nothing to do with
+> binary representation.
+>
+> Any one round operation will introduce a bias. You had a number, say
+> 2.3, and it gets rounded down to 2.0, introducing an error of -0.3. But
+> if you have lots of rounds, some will round up, and some will round
+> down, and we want the rounding errors to cancel.
+>
+> The errors *almost* cancel using the naive rounding algorithm as most of
+> the digits pair up:
+>
+> .1 rounds down, error = -0.1
+> .9 rounds up, error = +0.1
+>
+> .2 rounds down, error = -0.2
+> .8 rounds up, error = +0.2
+>
+> etc. If each digit is equally likely, then on average they'll cancel and
+> we're left with *almost* no overall error.
+>
+> The problem is that while there are four digits rounding down (.1
+> through .4) there are FIVE which round up (.5 through .9). Two digits
+> don't pair up:
+>
+> .0 stays unchanged, error = 0
+> .5 always rounds up, error = +0.5
+>
+> Given that for many purposes, our data is recorded only to a fixed
+> number of decimal places, we're dealing with numbers like 0.5 rather
+> than 0.5000000001, so this can become a real issue. Every ten rounding
+> operations will introduce an average error of +0.05 instead of
+> cancelling out. Rounding introduces a small but real bias.
+>
+> The most common (and, in many experts' opinion, the best default
+> behaviour) is Banker's Rounding, or round-to-even. All the other digits
+> round as per the usual rule, but .5 rounds UP half the time and DOWN the
+> rest of the time:
+>
+> 0.5, 2.5, 3.5 etc round down, error = -0.5
+> 1.5, 3.5, 5.5 etc round up, error = +0.5
+>
+> thus on average the .5 digit introduces no error and the bias goes away.
+>
+>
+
+...and we have a stats module that would be a great place for a round
+function that needs to cancel rounding errors.  The simple case should be
+the intuitive case for most users.  My experience and that of many users of
+the python irc channel on freenode is that round-half-to-even is not the
+intuitive, or even desired, behavior - round-half-up is.  This wouldn't be
+frustrating to the human user if the round built-in let you pick the method,
+instead you have to use the very complicated decimal module with a modified
+context to get intuitive behavior.
+
+I could live with `round(2.5) -> 2.0` if `round(2.5, method='up') -> 3.0`
+(or some similar spelling) was an option.  As it stands, this is a wart on
+the language.  "Statistically balanced rounding" is a special case, not the
+default case.
+
+>
+> --
+> Steve
+> _______________________________________________
+> Python-Dev mailing list
+> Python-Dev@python.org
+> https://mail.python.org/mailman/listinfo/python-dev
+> Unsubscribe: https://mail.python.org/mailman/options/python-dev/tritium-
+> list%40sdamon.com
+
+
+
+------------------------------
+
+Message: 5
+Date: Sun, 30 Sep 2018 14:49:49 +1300
+From: Greg Ewing <greg.ewing@canterbury.ac.nz>
+To: python-dev@python.org
+Subject: Re: [Python-Dev] Change in Python 3's "round" behavior
+Message-ID: <5BB02BBD.5090804@canterbury.ac.nz>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+
+I don't really get the statistical argument. If you're doing something
+like calculating an average and care about accuracy, why are you rounding
+the values before averaging? Why not average first and then round the
+result if you need to?
+
+--
+Greg
+
+
+
+------------------------------
+
+Message: 6
+Date: Sun, 30 Sep 2018 06:26:49 -0400
+From: "Alex Walters" <tritium-list@sdamon.com>
+To: <python-dev@python.org>
+Subject: Re: [Python-Dev] Change in Python 3's "round" behavior
+Message-ID: <24b501d458a8$19962f90$4cc28eb0$@sdamon.com>
+Content-Type: text/plain;       charset="us-ascii"
+
+
+
+> -----Original Message-----
+> From: Python-Dev <python-dev-bounces+tritium-
+> list=sdamon.com@python.org> On Behalf Of Greg Ewing
+> Sent: Saturday, September 29, 2018 9:50 PM
+> To: python-dev@python.org
+> Subject: Re: [Python-Dev] Change in Python 3's "round" behavior
+>
+> I don't really get the statistical argument. If you're doing something
+> like calculating an average and care about accuracy, why are you rounding
+> the values before averaging? Why not average first and then round the
+> result if you need to?
+>
+
+Other use case is finance, where you can end up with interest calculations
+that are fractional of the base unit of currency.  US$2.345 is impossible to
+represent in real currency, so it has to be rounded.  With
+half-towards-even, that rounds to $2.34, and $2.355 rounds to $2.36.  It
+evens out in the long run.  While that is very helpful for finance
+calculations, if you are doing finance with that level of precision, you
+should be using decimal instead of float anyways and decimal's round has
+configurable round method.
+
+> --
+> Greg
+>
+> _______________________________________________
+> Python-Dev mailing list
+> Python-Dev@python.org
+> https://mail.python.org/mailman/listinfo/python-dev
+> Unsubscribe: https://mail.python.org/mailman/options/python-dev/tritium-
+> list%40sdamon.com
+
+
+
+------------------------------
+
+Message: 7
+Date: Sun, 30 Sep 2018 22:17:03 +1000
+From: Steven D'Aprano <steve@pearwood.info>
+To: python-dev@python.org
+Subject: Re: [Python-Dev] Change in Python 3's "round" behavior
+Message-ID: <20180930121703.GK19437@ando.pearwood.info>
+Content-Type: text/plain; charset=us-ascii
+
+On Sat, Sep 29, 2018 at 09:40:03PM -0400, Alex Walters wrote:
+
+> ...and we have a stats module that would be a great place for a round
+> function that needs to cancel rounding errors.
+
+This has nothing to do with statistics.
+
+You should consider that this is often called "Banker's Rounding" and
+what that tells you. (It's also called Dutch Rounding.)
+
+
+> The simple case should be the intuitive case for most users.
+
+Should it? I think that having the most correct behaviour should be the
+default.
+
+Who decides what is "intuitive"?
+
+I asked my three year old nephew whether 1.5 should round to down to 1
+or up to 2, and he said that he didn't care about numbers because he
+was sailing across the ocean and I was standing in the way of his boat.
+
+
+> My experience and that of many users of
+> the python irc channel on freenode is that round-half-to-even is not the
+> intuitive, or even desired, behavior - round-half-up is.
+
+It would be very informative to ask *why* they want round-half-up.
+
+I expect that the reason given will boil down to "because it is the
+rounding method I learned in school" even if they can't articulate it
+that way, and start going on about it being "intuitive" as if rounding
+ties upwards was more intuitive than rounding ties downward.
+
+Compatibility with "other languages" isn't the answer, because other
+languages differ in how they do rounding and we can't match them all:
+
+# Javascript
+js> Math.round(2.5) + Math.round(-2.5)
+1
+
+# Ruby
+steve@orac ~ $ ruby -e 'puts (2.5).round() + (-2.5).round()'
+0
+
+
+VBScript is another language which uses Bankers Rounding:
+
+https://blogs.msdn.microsoft.com/ericlippert/2003/09/26/bankers-rounding/
+
+although the example given (calculating an average) is misleading,
+because as I said this is not about statistics. Bankers Rounding
+produces better *averages* because it produces better *sums* (to quote
+one of the comments).
+
+Similarly for differences. If you perform many subtractions (let's say
+you are paying off a loan, and calculating interest, then rounding to
+the nearest cent) you have to care about bias. If each rounding
+introduces a 0.5 cent bias (as round-half-up does) then the total bias
+increases as the number of transactions increases.
+
+
+> This wouldn't be frustrating to the human user
+
+Did you intend to imply I'm not human, or was it an accident?
+
+
+--
+Steve
+
+
+------------------------------
+
+Message: 8
+Date: Mon, 1 Oct 2018 00:14:26 +1000
+From: Chris Angelico <rosuav@gmail.com>
+To: python-dev <python-dev@python.org>
+Subject: Re: [Python-Dev] Change in Python 3's "round" behavior
+Message-ID:
+        <CAPTjJmr2cGbRs3Q8bYiLf1pSgfjbFMogXE3LRA-5d5Uh-jTB-w@mail.gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+
+On Sun, Sep 30, 2018 at 10:18 PM Steven D'Aprano <steve@pearwood.info> wrote:
+>
+> On Sat, Sep 29, 2018 at 09:40:03PM -0400, Alex Walters wrote:
+> > My experience and that of many users of
+> > the python irc channel on freenode is that round-half-to-even is not the
+> > intuitive, or even desired, behavior - round-half-up is.
+>
+> It would be very informative to ask *why* they want round-half-up.
+>
+> I expect that the reason given will boil down to "because it is the
+> rounding method I learned in school" even if they can't articulate it
+> that way, and start going on about it being "intuitive" as if rounding
+> ties upwards was more intuitive than rounding ties downward.
+
+Let's start by assuming that real numbers are a perfectly continuous
+space of values, and that every actually-recorded value is *already*
+the result of rounding some number to fit within our available space
+(rather than assuming that recorded values are perfectly precise and
+correct). Further, assume that representable numbers are equally
+spaced - not strictly true, but extremely hard to compensate for. That
+means that any representable number actually has to indicate a range
+of values centered on that value. For the sake of argument, pretend we
+can represent one digit before the decimal and one after; in actual
+usage, this would occur at the extreme of precision, 53 bits down the
+line.
+
+So the number 2.0 actually means the range (1.95, 2.05), the number
+2.1 really means (2.05, 2.15), 2.5 means (2.45, 2.55), 2.9 means
+(2.85, 2.95), 3.0 means (2.95, 3.05).
+
+Now we take our values and round them to integer.
+
+If we round all 0.5 values up, that means that the rounded value 2
+will now catch all values in the range (1.45, 2.45), and the rounded
+value 3 catches (2.45, 3.45). In effect, our values are being skewed
+low by half a ULP.
+
+By using "round to even", you make the rounded value 2 catch all
+values in the range (1.45, 2.55), and the rounded value 3 now catches
+(2.55, 3.45). Values are now evenly spread around the stated value,
+but there is an entire ULP of discrepancy between the span of even
+numbers and the span of odd numbers.
+
+Which is more important? For a number's effective range to be centered
+around it, or for its range to be the same size as the range of every
+other number?
+
+ChrisA
+
+
+------------------------------
+
+Subject: Digest Footer
+
+_______________________________________________
+Python-Dev mailing list
+Python-Dev@python.org
+https://mail.python.org/mailman/listinfo/python-dev
+
+
+------------------------------
+
+End of Python-Dev Digest, Vol 182, Issue 52
+*******************************************
